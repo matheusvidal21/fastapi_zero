@@ -1,27 +1,18 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from fast_zero.database import get_session
 from fast_zero.models import User
 from fast_zero.schemas import Token
 from fast_zero.security import (
     create_access_token,
-    get_current_user,
     verify_password,
 )
+from fast_zero.typing import T_CurrentUser, T_OAuth2Form, T_Session
 
 auth_router = APIRouter(
     prefix='/auth',
     tags=['auth'],
 )
-
-T_Session = Annotated[Session, Depends(get_session)]
-T_OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
-T_CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @auth_router.post('/token', response_model=Token)

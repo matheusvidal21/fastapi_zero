@@ -1,25 +1,21 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session
 from fast_zero.models import User
-from fast_zero.schemas import UserList, UserPublic, UserSchema
-from fast_zero.security import get_current_user, get_password_hash
+from fast_zero.schemas import Message, UserList, UserPublic, UserSchema
+from fast_zero.security import get_password_hash
+from fast_zero.typing import T_CurrentUser, T_Session
 
 user_router = APIRouter(
     prefix='/users',
     tags=['users'],
 )
 
-T_Session = Annotated[Session, Depends(get_session)]
-T_CurrentUser = Annotated[User, Depends(get_current_user)]
-
 
 @user_router.post(
-    '/users/', response_model=UserPublic, status_code=status.HTTP_201_CREATED
+    '/', response_model=UserPublic, status_code=status.HTTP_201_CREATED
 )
 def create_user(session: T_Session, user: UserSchema):
     db_user = session.scalar(
@@ -53,13 +49,13 @@ def create_user(session: T_Session, user: UserSchema):
     return db_user
 
 
-@user_router.get('/users', response_model=UserList)
+@user_router.get('/', response_model=UserList)
 def get_users(session: T_Session, limit: int = 10, offset: int = 0):
     users = session.scalars(select(User).limit(limit).offset(offset))
     return {'users': users}
 
 
-@user_router.get('/users/{user_id}', response_model=UserPublic)
+@user_router.get('/{user_id}', response_model=UserPublic)
 def get_user(user_id: int, session: Session = Depends(get_session)):
     user = session.scalar(select(User).where(User.id == user_id))
     if not user:
@@ -70,7 +66,7 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
     return user
 
 
-@user_router.put('/users/{user_id}', response_model=UserPublic)
+@user_router.put('/{user_id}', response_model=UserPublic)
 def update_user(
     session: T_Session,
     user_id: int,
@@ -92,7 +88,7 @@ def update_user(
     return current_user
 
 
-@user_router.delete('/users/{user_id}')
+@user_router.delete('/{user_id}', response_model=Message)
 def delete_user(session: T_Session, user_id: int, current_user: T_CurrentUser):
     if current_user.id != user_id:
         raise HTTPException(
